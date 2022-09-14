@@ -8,14 +8,16 @@ labels:
    stage: dev
 include:
 - "*.py"  # A pattern for matching which files to include in the bento
+- "blazefaceback.pth"
 exclude:
 - "tests/"
-- "load-models/"
 - ".venv/"
 - "__pycache__/"
 - ".git/"
 python:
-   packages:  # Additional pip packages required by the service
-   - torch
-   - opencv-python
-   - numpy
+   requirements_txt: "./requirements.txt"
+docker:
+    system_packages: # OpenCV dependencies.
+        - ffmpeg
+        - libsm6
+        - libxext6

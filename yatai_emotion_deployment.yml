@@ -1,0 +1,31 @@
+apiVersion: serving.yatai.ai/v1alpha2
+kind: BentoDeployment
+metadata:
+    name: my-bento-deployment
+    namespace: yatai
+spec:
+    bento_tag: emotion_recognition:vmk5xgrs5c7u4aav
+    ingress:
+        enabled: true
+    resources:
+        limits:
+            cpu: "500m"
+            memory: "512m"
+        requests:
+            cpu: "250m"
+            memory: "128m"
+    autoscaling:
+        max_replicas: 10
+        min_replicas: 2
+    runners:
+        - name: emotion
+          resources:
+              limits:
+                  cpu: "1000m"
+                  memory: "1Gi"
+              requests:
+                  cpu: "500m"
+                  memory: "512m"
+              autoscaling:
+                  max_replicas: 4
+                  min_replicas: 1
