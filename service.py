@@ -23,11 +23,10 @@ emotion_runner = bentoml.onnx.get("emotion:latest").to_runner()
 svc = bentoml.Service("emotion_recognition", runners=[preprocess_blazeface_runner, blazeface_runner, postprocess_blazeface_runner, preprocess_emotion_runner, emotion_runner])
 
 input_spec = Multipart(image=Image(), annotations=JSON())
-output_spec = Multipart(output=NumpyNdarray(), emotions=JSON())
 
 # Create new API and add it to "svc"
-@svc.api(input=input_spec, output=output_spec)  # define IO spec
-async def predict_async(image: Image, annotations: dict[str, Any]) -> dict[str, NDArray[Any] | dict[str, Any]]:
+@svc.api(input=input_spec, output=JSON())  # define IO spec
+async def predict_async(image: Image, annotations: dict[str, Any]):
     """ Prepare the image for Blazeface. """
     imageSize = 256 # Front model would be 128 in size.
     blazeface_input = await preprocess_blazeface_runner.async_run(image, imageSize)
@@ -37,6 +36,8 @@ async def predict_async(image: Image, annotations: dict[str, Any]) -> dict[str, 
 
     """ Postprocess the raw predictions and use Non-maximum suppression to remove overlapping detection. """
     blazeface_script_result = await postprocess_blazeface_runner.async_run(blazeface_model_result)
+    if len(blazeface_script_result[0]) == 0:   # Stop when no faces in photo exist.
+        return {'output': [],'emotions':{'userId': annotations['userId'],'emotions': []}}
 
     """ Get the face(s) of the image with help of the bounding boxes. """
     emotion_input = await preprocess_emotion_runner.async_run(blazeface_script_result[0], image)
@@ -46,7 +47,8 @@ async def predict_async(image: Image, annotations: dict[str, Any]) -> dict[str, 
     
     """ Format output. """
     emotions_per_face_dicts = []
-    for faceIndx, emotions in enumerate(emotion_result.tolist()):
+    emotion_result = emotion_result.tolist()
+    for faceIndx, emotions in enumerate(emotion_result):
             emotions_per_face_dicts.append({'raw':{}, 'dominantEmotion':{}})
             # Find name of most likely emotion.
             dominant = index_to_emotion(emotions.index(max(emotions)))

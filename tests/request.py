@@ -9,8 +9,15 @@ m = MultipartEncoder(
     }
 )
 
+# bentoml serve endpoint 
+# response =requests.post(
+#     "http://0.0.0.0:3000/predict_async", data=m, headers={"Content-Type": m.content_type}
+# )
+
+# yatai endpoint
 response =requests.post(
-    "http://0.0.0.0:3000/predict_async", data=m, headers={"Content-Type": m.content_type}
+    "http://emotion-yatai.127.0.0.1.sslip.io/predict_async", data=m, headers={"Content-Type": m.content_type}
 )
+
 
 print(response.content)
