@@ -26,7 +26,7 @@ input_spec = Multipart(image=Image(), annotations=JSON())
 
 # Create new API and add it to "svc"
 @svc.api(input=input_spec, output=JSON())  # define IO spec
-async def predict_async(image: Image, annotations: dict[str, Any]):
+async def predict_async(image: Image, annotations: "dict[str, Any]"):
     """ Prepare the image for Blazeface. """
     imageSize = 256 # Front model would be 128 in size.
     blazeface_input = await preprocess_blazeface_runner.async_run(image, imageSize)
@@ -59,7 +59,7 @@ async def predict_async(image: Image, annotations: dict[str, Any]):
                 emotion_type = index_to_emotion(i)
                 emotions_per_face_dicts[faceIndx]['raw'][emotion_type] = emotion
 
-    return  {'output': emotion_result,'emotions':{'userId': annotations['userId'],'emotions': emotions_per_face_dicts}}
+    return  {'output': emotion_result,'emotions':{'userId': annotations['userId'],'emotions': emotions_per_face_dicts, 'boxes': blazeface_script_result[0]}}
 
 
 def index_to_emotion(index):
