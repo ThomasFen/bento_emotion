@@ -7,6 +7,7 @@ from bentoml.io import Multipart
 from typing import TYPE_CHECKING
 from typing import Any
 from time import time
+from datetime import datetime
 from preprocessBlazeface import preprocessBlazefaceRunnable
 from postprocessBlazeface import postprocessBlazefaceRunnable
 from preprocessEmotion import preprocessEmotionRunnable
@@ -44,6 +45,9 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
     
     """ Run the emotion model. """
     emotion_result = await emotion_runner.async_run(emotion_input)
+
+    """ Result time stamp """
+    date = datetime.now().isoformat()
     
     """ Format output. """
     emotions_per_face_dicts = []
@@ -57,7 +61,7 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
             # Add the numeric value of every emotion type. They lie between 0 and 1.
             for i, emotion in enumerate(emotions):
                 emotion_type = index_to_emotion(i)
-                emotions_per_face_dicts[faceIndx]['raw'][emotion_type] = emotion
+                emotions_per_face_dicts[faceIndx]['raw'][emotion_type] = {"date": date, "value": emotion}
 
     return  {'output': emotion_result,'emotions':{'userId': annotations['userId'],'emotions': emotions_per_face_dicts, 'boxes': blazeface_script_result[0]}}
 
