@@ -7,7 +7,7 @@ from bentoml.io import Multipart
 from typing import TYPE_CHECKING
 from typing import Any
 from time import time
-from datetime import datetime
+from datetime import datetime, timezone
 from preprocessBlazeface import preprocessBlazefaceRunnable
 from postprocessBlazeface import postprocessBlazefaceRunnable
 from preprocessEmotion import preprocessEmotionRunnable
@@ -47,7 +47,7 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
     emotion_result = await emotion_runner.async_run(emotion_input)
 
     """ Result time stamp """
-    date = datetime.now().isoformat()
+    date = datetime.now(timezone.utc).isoformat(timespec='milliseconds')
     
     """ Format output. """
     emotions_per_face_dicts = []
