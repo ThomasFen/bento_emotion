@@ -65,14 +65,14 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
             # Add the numeric value of every emotion type. They lie between 0 and 1.
             for i, emotion in enumerate(emotions):
                 emotion_type = index_to_emotion(i)
-                emotions_per_face_dicts[faceIndx]['raw'][emotion_type] = {"date": date, "value": emotion}
+                emotions_per_face_dicts[faceIndx]['raw'][emotion_type] = emotion
 
     if not clientFaceDetection:
             # Add box coordinates.
             for i in range(len(emotions_per_face_dicts)):
                 emotions_per_face_dicts[i]['box'] = blazeface_script_result[0][i]
 
-    return  dict(annotations, emotions=emotions_per_face_dicts)
+    return  dict(annotations, emotions=emotions_per_face_dicts, date=date)
 
 
 def index_to_emotion(index):
