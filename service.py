@@ -38,7 +38,7 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
     """ Postprocess the raw predictions and use Non-maximum suppression to remove overlapping detection. """
     blazeface_script_result = await postprocess_blazeface_runner.async_run(blazeface_model_result)
     if len(blazeface_script_result[0]) == 0:   # Stop when no faces in photo exist.
-        return {'output': [],'emotions':{'userId': annotations['userId'],'emotions': []}}
+        return dict(annotations, emotions=[], boxes=[])
 
     """ Get the face(s) of the image with help of the bounding boxes. """
     emotion_input = await preprocess_emotion_runner.async_run(blazeface_script_result[0], image)
@@ -58,12 +58,14 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
             dominant = index_to_emotion(emotions.index(max(emotions)))
             # Add the name for the emotion that was determined to be predominant.
             emotions_per_face_dicts[faceIndx]['dominantEmotion'] = dominant 
+            # Add box coordinates.
+            emotions_per_face_dicts[faceIndx]['box'] = blazeface_script_result[0][faceIndx]
             # Add the numeric value of every emotion type. They lie between 0 and 1.
             for i, emotion in enumerate(emotions):
                 emotion_type = index_to_emotion(i)
                 emotions_per_face_dicts[faceIndx]['raw'][emotion_type] = {"date": date, "value": emotion}
 
-    return  {'output': emotion_result,'emotions':{'userId': annotations['userId'],'emotions': emotions_per_face_dicts, 'boxes': blazeface_script_result[0]}}
+    return  dict(annotations, emotions=emotions_per_face_dicts)
 
 
 def index_to_emotion(index):
