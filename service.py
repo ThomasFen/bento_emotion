@@ -28,20 +28,24 @@ input_spec = Multipart(image=Image(), annotations=JSON())
 # Create new API and add it to "svc"
 @svc.api(input=input_spec, output=JSON())  # define IO spec
 async def predict_async(image: Image, annotations: "dict[str, Any]"):
-    """ Prepare the image for Blazeface. """
-    imageSize = 256 # Front model would be 128 in size.
-    blazeface_input = await preprocess_blazeface_runner.async_run(image, imageSize)
+    clientFaceDetection = annotations['clientFaceDetection']
+    if clientFaceDetection:
+        emotion_input = await preprocess_emotion_runner.async_run(image)
+    else:
+        """ Prepare the image for Blazeface. """
+        imageSize = 256 # Front model would be 128 in size.
+        blazeface_input = await preprocess_blazeface_runner.async_run(image, imageSize)
 
-    """ Run the Blazeface back model. """
-    blazeface_model_result = await blazeface_runner.async_run(blazeface_input) 
+        """ Run the Blazeface back model. """
+        blazeface_model_result = await blazeface_runner.async_run(blazeface_input) 
 
-    """ Postprocess the raw predictions and use Non-maximum suppression to remove overlapping detection. """
-    blazeface_script_result = await postprocess_blazeface_runner.async_run(blazeface_model_result)
-    if len(blazeface_script_result[0]) == 0:   # Stop when no faces in photo exist.
-        return dict(annotations, emotions=[], boxes=[])
+        """ Postprocess the raw predictions and use Non-maximum suppression to remove overlapping detection. """
+        blazeface_script_result = await postprocess_blazeface_runner.async_run(blazeface_model_result)
+        if len(blazeface_script_result[0]) == 0:   # Stop when no faces in photo exist.
+            return dict(annotations, emotions=[], boxes=[])
 
-    """ Get the face(s) of the image with help of the bounding boxes. """
-    emotion_input = await preprocess_emotion_runner.async_run(blazeface_script_result[0], image)
+        """ Get the face(s) of the image with help of the bounding boxes. """
+        emotion_input = await preprocess_emotion_runner.async_run(image, False, blazeface_script_result[0])
     
     """ Run the emotion model. """
     emotion_result = await emotion_runner.async_run(emotion_input)
@@ -58,12 +62,15 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
             dominant = index_to_emotion(emotions.index(max(emotions)))
             # Add the name for the emotion that was determined to be predominant.
             emotions_per_face_dicts[faceIndx]['dominantEmotion'] = dominant 
-            # Add box coordinates.
-            emotions_per_face_dicts[faceIndx]['box'] = blazeface_script_result[0][faceIndx]
             # Add the numeric value of every emotion type. They lie between 0 and 1.
             for i, emotion in enumerate(emotions):
                 emotion_type = index_to_emotion(i)
                 emotions_per_face_dicts[faceIndx]['raw'][emotion_type] = {"date": date, "value": emotion}
+
+    if not clientFaceDetection:
+            # Add box coordinates.
+            for i in range(len(emotions_per_face_dicts)):
+                emotions_per_face_dicts[i]['box'] = blazeface_script_result[0][i]
 
     return  dict(annotations, emotions=emotions_per_face_dicts)
 

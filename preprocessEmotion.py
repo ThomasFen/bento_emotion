@@ -20,7 +20,10 @@ class preprocessEmotionRunnable(bentoml.Runnable):
         return img
 
     @bentoml.Runnable.method(batchable=False)
-    def is_positive(self,  scriptOutput, pilImage):
+    def is_positive(self, pilImage, clientFaceDetection = True, scriptOutput = None):
+        if clientFaceDetection:
+            return np.asarray([self.process_cropped_image(np.asarray(pilImage))])
+
         boxes = []
         wholePadding = max(pilImage.width, pilImage.height) - min(pilImage.width, pilImage.height)
         sidePadding = wholePadding / 2
