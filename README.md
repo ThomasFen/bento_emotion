@@ -34,7 +34,7 @@ Run simple test script.
 
 Response code 500 usually means the request was cancelled because a Runner is too busy (`timeout` in config).
 
-Response code 503 usually means bento removed the request from the adaptive batching queue of the emotion model, because it figured out that the inference time + queue wait time would be lower than `max_latency_ms` in config.
+Response code 503 usually means bento removed the request from the adaptive batching queue of the emotion model, because it figured out that the inference time + queue wait time would be higher than `max_latency_ms` in config.
 ```
 $ cd tests && python async.py
 ...
