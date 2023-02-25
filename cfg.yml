@@ -1,0 +1,23 @@
+runners:
+  timeout: 1
+  batching:
+    enabled: true
+    max_batch_size: 100
+    max_latency_ms: 60
+  # emotion_batched:
+  #   timeout: 1
+  #   batching:
+  #     enabled: false
+  #     max_batch_size: 100
+  #     max_latency_ms: 50
+  # blazeface_back_batchable:
+  #   # timeout: 1
+  #   batching:
+  #     enabled: true
+  #     max_batch_size: 5
+  #     max_latency_ms: 100
+api_server:
+  # timeout: 1
+  # workers: 2
+  metrics:
+    enabled: true
