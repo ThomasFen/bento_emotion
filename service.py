@@ -6,7 +6,7 @@ from bentoml.io import NumpyNdarray
 from bentoml.io import Multipart
 from typing import TYPE_CHECKING
 from typing import Any
-from time import time
+import time
 from datetime import datetime, timezone
 from preprocessBlazeface import preprocessBlazefaceRunnable
 from postprocessBlazeface import postprocessBlazefaceRunnable
@@ -14,6 +14,17 @@ from preprocessEmotion import preprocessEmotionRunnable
 from numpy.typing import NDArray
 if TYPE_CHECKING:
     from PIL.Image import Image
+
+# # Uncomment to see bentoml logs
+# import logging
+
+# ch = logging.StreamHandler()
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# ch.setFormatter(formatter)
+
+# bentoml_logger = logging.getLogger("bentoml")
+# bentoml_logger.addHandler(ch)
+# bentoml_logger.setLevel(logging.DEBUG)
 
 preprocess_blazeface_runner = bentoml.Runner(preprocessBlazefaceRunnable, name="preprocess_blazeface")
 blazeface_runner = bentoml.pytorch.get("blazeface_back:latest").to_runner()
@@ -28,6 +39,7 @@ input_spec = Multipart(image=Image(), annotations=JSON())
 # Create new API and add it to "svc"
 @svc.api(input=input_spec, output=JSON())  # define IO spec
 async def predict_async(image: Image, annotations: "dict[str, Any]"):
+    _time_begin = time.time()
     clientFaceDetection = annotations['clientFaceDetection']
     if clientFaceDetection:
         emotion_input = await preprocess_emotion_runner.async_run(image)
@@ -41,7 +53,7 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
 
         """ Postprocess the raw predictions and use Non-maximum suppression to remove overlapping detection. """
         blazeface_script_result = await postprocess_blazeface_runner.async_run(blazeface_model_result)
-        if len(blazeface_script_result[0]) == 0:   # Stop when no faces in photo exist.
+        if len(blazeface_script_result) == 0:   # Stop when no faces in photo exist.
             return dict(annotations, emotions=[], boxes=[])
 
         """ Get the face(s) of the image with help of the bounding boxes. """
@@ -70,9 +82,11 @@ async def predict_async(image: Image, annotations: "dict[str, Any]"):
     if not clientFaceDetection:
             # Add box coordinates.
             for i in range(len(emotions_per_face_dicts)):
-                emotions_per_face_dicts[i]['box'] = blazeface_script_result[0][i]
+                emotions_per_face_dicts[i]['box'] = blazeface_script_result[i]
 
-    return  dict(annotations, emotions=emotions_per_face_dicts, date=date)
+    duration=time.time() - _time_begin
+
+    return  dict(annotations, emotions=emotions_per_face_dicts, date=date, duration=duration)
 
 
 def index_to_emotion(index):

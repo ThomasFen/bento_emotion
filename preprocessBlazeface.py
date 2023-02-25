@@ -38,7 +38,7 @@ class preprocessBlazefaceRunnable(bentoml.Runnable):
         img = np.asarray(img, dtype=np.float32)
 
         img = torch.from_numpy(img).permute((2, 0, 1))
-        img = img.unsqueeze(0) # TODO add batch support
+        img = img.unsqueeze(0)
         # TODO add device support: img = img.to(device) 
         img = img.float() / 127.5 - 1.0
         return img
