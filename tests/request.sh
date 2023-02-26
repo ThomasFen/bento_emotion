@@ -1,2 +1,0 @@
-#!/bin/sh
-curl -X POST -H "Content-Type: multipart/form-data" -F annotations='{"userId": 345786, "conferenceId": 890678, "clientFaceDetection": false}' -F image=@test.png  http://0.0.0.0:3000/predict_async
